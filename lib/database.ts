@@ -4,10 +4,18 @@ let pool: Pool | null = null;
 
 export async function getDatabase(): Promise<Pool> {
   if (!pool) {
+    console.log('Environment variables debug:');
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+    console.log('All env vars:', Object.keys(process.env).filter(key => key.includes('DATABASE')));
+    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+    console.log('DATABASE_URL length:', process.env.DATABASE_URL?.length || 0);
+    console.log('DATABASE_URL starts with:', process.env.DATABASE_URL?.substring(0, 20) || 'undefined');
+    
     const databaseUrl = process.env.DATABASE_URL;
     
     if (!databaseUrl) {
       console.error('DATABASE_URL environment variable is not set');
+      console.error('Available env vars:', Object.keys(process.env).sort());
       throw new Error('DATABASE_URL environment variable is required');
     }
 
