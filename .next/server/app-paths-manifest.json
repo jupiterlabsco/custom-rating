@@ -1,5 +1,1 @@
-{
-  "/page": "app/page.js",
-  "/api/ratings/average/route": "app/api/ratings/average/route.js",
-  "/api/ratings/route": "app/api/ratings/route.js"
-}
+{}
