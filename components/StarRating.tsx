@@ -20,6 +20,7 @@ export default function StarRating({
   const [rating, setRating] = useState(initialRating);
   const [hoverRating, setHoverRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const sizeClasses = {
     small: 'w-4 h-4',
@@ -28,7 +29,7 @@ export default function StarRating({
   };
 
   const handleStarClick = async (starRating: number) => {
-    if (readonly || isSubmitting) return;
+    if (readonly || isSubmitting || hasSubmitted) return;
 
     setIsSubmitting(true);
     try {
@@ -45,6 +46,7 @@ export default function StarRating({
 
       if (response.ok) {
         setRating(starRating);
+        setHasSubmitted(true);
         onRatingSubmit?.(starRating);
       } else {
         console.error('Failed to submit rating');
@@ -57,13 +59,13 @@ export default function StarRating({
   };
 
   const handleStarHover = (starRating: number) => {
-    if (!readonly) {
+    if (!readonly && !hasSubmitted) {
       setHoverRating(starRating);
     }
   };
 
   const handleMouseLeave = () => {
-    if (!readonly) {
+    if (!readonly && !hasSubmitted) {
       setHoverRating(0);
     }
   };
@@ -80,11 +82,11 @@ export default function StarRating({
           key={star}
           type="button"
           className={`${sizeClasses[size]} ${
-            readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110'
-          } transition-transform duration-150 ${isSubmitting ? 'opacity-50' : ''}`}
+            readonly || hasSubmitted ? 'cursor-default' : 'cursor-pointer hover:scale-110'
+          } transition-transform duration-150 ${isSubmitting ? 'opacity-50' : ''} ${hasSubmitted ? 'opacity-75' : ''}`}
           onClick={() => handleStarClick(star)}
           onMouseEnter={() => handleStarHover(star)}
-          disabled={readonly || isSubmitting}
+          disabled={readonly || isSubmitting || hasSubmitted}
         >
           <svg
             fill={star <= displayRating ? '#fbbf24' : '#e5e7eb'}
@@ -97,6 +99,9 @@ export default function StarRating({
       ))}
       {isSubmitting && (
         <span className="ml-2 text-sm text-gray-500">Submitting...</span>
+      )}
+      {hasSubmitted && !isSubmitting && (
+        <span className="ml-2 text-sm text-green-600 font-medium">Thanks!</span>
       )}
     </div>
   );

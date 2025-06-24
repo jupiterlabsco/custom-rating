@@ -1,12 +1,22 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import StarRating from '@/components/StarRating';
 import AverageRating from '@/components/AverageRating';
 
 function EmbedContent() {
   const searchParams = useSearchParams();
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div className="p-4 text-center text-gray-500 text-sm">Loading...</div>;
+  }
+
   const serviceProviderId = searchParams.get('serviceProviderId');
   const type = searchParams.get('type') || 'both'; // 'rating', 'average', or 'both'
   const size = (searchParams.get('size') as 'small' | 'medium' | 'large') || 'medium';
@@ -39,7 +49,7 @@ function EmbedContent() {
             size={size}
             onRatingSubmit={() => {
               // Refresh the parent window if possible
-              if (window.parent) {
+              if (typeof window !== 'undefined' && window.parent) {
                 window.parent.postMessage('rating-submitted', '*');
               }
             }}
