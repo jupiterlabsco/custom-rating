@@ -4,29 +4,46 @@ let pool: Pool | null = null;
 
 export async function getDatabase(): Promise<Pool> {
   if (!pool) {
+    const databaseUrl = process.env.DATABASE_URL;
+    
+    if (!databaseUrl) {
+      console.error('DATABASE_URL environment variable is not set');
+      throw new Error('DATABASE_URL environment variable is required');
+    }
+
+    console.log('Connecting to database...');
+    
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: databaseUrl,
       ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     });
 
-    // Create table if it doesn't exist
-    const client = await pool.connect();
+    // Test connection and create table if it doesn't exist
     try {
-      await client.query(`
-        CREATE TABLE IF NOT EXISTS ratings (
-          id SERIAL PRIMARY KEY,
-          service_provider_id VARCHAR(255) NOT NULL,
-          rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          ip_address VARCHAR(255),
-          user_agent TEXT
-        );
+      const client = await pool.connect();
+      console.log('Database connection established');
+      
+      try {
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS ratings (
+            id SERIAL PRIMARY KEY,
+            service_provider_id VARCHAR(255) NOT NULL,
+            rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            ip_address VARCHAR(255),
+            user_agent TEXT
+          );
 
-        CREATE INDEX IF NOT EXISTS idx_service_provider_id ON ratings(service_provider_id);
-        CREATE INDEX IF NOT EXISTS idx_created_at ON ratings(created_at);
-      `);
-    } finally {
-      client.release();
+          CREATE INDEX IF NOT EXISTS idx_service_provider_id ON ratings(service_provider_id);
+          CREATE INDEX IF NOT EXISTS idx_created_at ON ratings(created_at);
+        `);
+        console.log('Database tables created/verified');
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error('Database connection failed:', error);
+      throw error;
     }
   }
 
@@ -52,16 +69,21 @@ export async function addRating(rating: Omit<Rating, 'id' | 'created_at'>): Prom
 }
 
 export async function getAverageRating(serviceProviderId: string): Promise<{ average: number; count: number }> {
-  const pool = await getDatabase();
-  const result = await pool.query(
-    'SELECT AVG(rating) as average, COUNT(*) as count FROM ratings WHERE service_provider_id = $1',
-    [serviceProviderId]
-  );
-  const row = result.rows[0];
-  return {
-    average: row?.average ? Math.round(parseFloat(row.average) * 10) / 10 : 0,
-    count: parseInt(row?.count) || 0
-  };
+  try {
+    const pool = await getDatabase();
+    const result = await pool.query(
+      'SELECT AVG(rating) as average, COUNT(*) as count FROM ratings WHERE service_provider_id = $1',
+      [serviceProviderId]
+    );
+    const row = result.rows[0];
+    return {
+      average: row?.average ? Math.round(parseFloat(row.average) * 10) / 10 : 0,
+      count: parseInt(row?.count) || 0
+    };
+  } catch (error) {
+    console.error('Error getting average rating:', error);
+    throw error;
+  }
 }
 
 export async function getRatings(serviceProviderId: string, limit: number = 100): Promise<Rating[]> {
