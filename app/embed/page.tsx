@@ -1,10 +1,11 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import StarRating from '@/components/StarRating';
 import AverageRating from '@/components/AverageRating';
 
-export default function EmbedPage() {
+function EmbedContent() {
   const searchParams = useSearchParams();
   const serviceProviderId = searchParams.get('serviceProviderId');
   const type = searchParams.get('type') || 'both'; // 'rating', 'average', or 'both'
@@ -46,5 +47,13 @@ export default function EmbedPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function EmbedPage() {
+  return (
+    <Suspense fallback={<div className="p-4 text-center text-gray-500 text-sm">Loading...</div>}>
+      <EmbedContent />
+    </Suspense>
   );
 }
