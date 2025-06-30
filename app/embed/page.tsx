@@ -21,6 +21,7 @@ function EmbedContent() {
   const type = searchParams.get('type') || 'both'; // 'rating', 'average', or 'both'
   const size = (searchParams.get('size') as 'small' | 'medium' | 'large') || 'medium';
   const showCount = searchParams.get('showCount') !== 'false';
+  const displayOnly = searchParams.get('displayOnly') === 'true';
 
   if (!serviceProviderId) {
     return (
@@ -42,7 +43,7 @@ function EmbedContent() {
         </div>
       )}
       
-      {(type === 'rating' || type === 'both') && (
+      {(type === 'rating' || type === 'both') && !displayOnly && (
         <div>
           <StarRating 
             serviceProviderId={serviceProviderId} 
