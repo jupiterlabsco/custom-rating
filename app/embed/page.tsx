@@ -32,7 +32,7 @@ function EmbedContent() {
   }
 
   return (
-    <div className="p-4 bg-white">
+    <div className="p-4">
       {(type === 'average' || type === 'both') && (
         <div className="mb-3">
           <AverageRating 
